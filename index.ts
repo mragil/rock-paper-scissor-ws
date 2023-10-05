@@ -32,6 +32,10 @@ const resetGame = (room: string) => {
 const server = Bun.serve<ClientData>({
   fetch(req, server) {
     const url = new URL(req.url);
+    if (url.pathname === "/")
+      return Response.json({
+        hai: "Hello",
+      });
     if (url.pathname === "/chat") {
       const username = getDataFromQuery(req, "userName");
       const room = getDataFromQuery(req, "roomName");
