@@ -10,5 +10,8 @@
   },
   "dependencies": {
     "zod": "^3.22.2"
+  },
+  "scripts": {
+    "start": "bun index.ts"
   }
 }
