@@ -1,6 +1,5 @@
 import { z } from "zod";
-
-type Pick = "Rock" | "Paper" | "Scissor";
+import { Pick } from "../type";
 
 const gamePickSchema = z.custom<Pick>();
 

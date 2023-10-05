@@ -5,8 +5,10 @@ interface ClientData {
   room: string;
 }
 
+type Pick = "Rock" | "Paper" | "Scissor";
+
 interface Game {
-  [key: string]: "Rock" | "Paper" | "Scissor";
+  [key: string]: Pick;
 }
 
 interface Room {
@@ -23,4 +25,4 @@ interface Message {
   text: string | Buffer;
 }
 
-export { ClientData, Game, Message, Room, ServerWebSocket };
+export { ClientData, Game, Message, Room, ServerWebSocket, Pick };
