@@ -1,9 +1,8 @@
 import { ClientData, Message, Room, ServerWebSocket } from "./type";
 
+import { LIMIT, PORT } from "./constant";
 import calculateGame from "./rockPaperScissor";
 import { gamePickSchema } from "./schema";
-
-const LIMIT = 2;
 const rooms: Room = {};
 let timer: Timer;
 
@@ -74,7 +73,7 @@ const server = Bun.serve<ClientData>({
 
     return new Response("Hello world");
   },
-  port: 3001,
+  port: PORT,
   websocket: {
     open(ws) {
       const { room, username } = ws.data;
