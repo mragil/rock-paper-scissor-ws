@@ -25,4 +25,17 @@ interface Message {
   text: string | Buffer;
 }
 
-export { ClientData, Game, Message, Room, ServerWebSocket, Pick };
+interface ResultMessage extends Message {
+  type: "RESULT";
+  data: Game;
+}
+
+export {
+  ResultMessage,
+  ClientData,
+  Game,
+  Message,
+  Pick,
+  Room,
+  ServerWebSocket,
+};

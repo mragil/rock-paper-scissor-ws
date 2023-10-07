@@ -1,4 +1,10 @@
-import { ClientData, Message, Room, ServerWebSocket } from "./type";
+import {
+  ClientData,
+  Message,
+  ResultMessage,
+  Room,
+  ServerWebSocket,
+} from "./type";
 
 import { LIMIT, PORT } from "./constant";
 import calculateGame from "./rockPaperScissor";
@@ -6,7 +12,7 @@ import { gamePickSchema } from "./schema";
 const rooms: Room = {};
 let timer: Timer;
 
-const sendMessageToRoom = (room: string, message: Message) => {
+const sendMessageToRoom = (room: string, message: Message | ResultMessage) => {
   rooms[room].member.forEach((client) => {
     client.send(JSON.stringify(message));
   });
@@ -134,6 +140,7 @@ const server = Bun.serve<ClientData>({
                 sendMessageToRoom(room, {
                   type: "RESULT",
                   text: `DRAW`,
+                  data: rooms[room].game,
                 });
                 resetGame(room);
               } else {
@@ -149,11 +156,12 @@ const server = Bun.serve<ClientData>({
           //2 Player Already Pick
           if (Object.keys(rooms[room].game).length === 2) {
             const winner = calculateGame(rooms[room].game);
-            msg = {
+            const resultMsg: ResultMessage = {
               type: "RESULT",
               text: `${winner}`,
+              data: rooms[room].game,
             };
-            sendMessageToRoom(room, msg);
+            sendMessageToRoom(room, resultMsg);
             resetGame(room);
           }
           break;
