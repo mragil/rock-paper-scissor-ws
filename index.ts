@@ -139,7 +139,7 @@ const server = Bun.serve<ClientData>({
                 });
                 sendMessageToRoom(room, {
                   type: "RESULT",
-                  text: `DRAW`,
+                  text: `${Object.keys(rooms[room].game)[0]}`,
                   data: rooms[room].game,
                 });
                 resetGame(room);
