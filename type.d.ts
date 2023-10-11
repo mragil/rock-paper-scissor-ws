@@ -17,11 +17,12 @@ interface Room {
     game: Game;
     counter: number;
     timer?: Timer;
+    replay: string[];
   };
 }
 
 interface Message {
-  type: "INFO" | "CHAT" | "GAME" | "OPPONENT" | "TIMER" | "RESULT" | "RESET";
+  type: "INFO" | "CHAT" | "GAME" | "OPPONENT" | "TIMER" | "RESULT" | "RESET" | "REPLAY";
   text: string | Buffer;
 }
 

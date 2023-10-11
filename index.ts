@@ -26,12 +26,16 @@ const getDataFromQuery = (req: Request, key: string) => {
   return new URL(req.url).searchParams.get(key);
 };
 
-const resetGame = (room: string) => {
+const resetTimer = (room: string) => {
   clearInterval(rooms[room].timer);
-  rooms[room].game = {};
   rooms[room].counter = 15;
   rooms[room].timer = undefined;
-  sendMessageToRoom(room, { type: "RESET", text: `Lets Play Again` });
+};
+
+const resetGame = (room: string) => {
+  rooms[room].game = {};
+  rooms[room].replay = [];
+  sendMessageToRoom(room, { type: "REPLAY", text: `Lets Play Again` });
 };
 
 const server = Bun.serve<ClientData>({
@@ -84,7 +88,13 @@ const server = Bun.serve<ClientData>({
     open(ws) {
       const { room, username } = ws.data;
       if (!rooms[room]) {
-        rooms[room] = { member: [ws], game: {}, counter: 15, timer };
+        rooms[room] = {
+          member: [ws],
+          game: {},
+          counter: 15,
+          timer,
+          replay: [],
+        };
       } else {
         const msg: Message = {
           type: "OPPONENT",
@@ -116,18 +126,14 @@ const server = Bun.serve<ClientData>({
         case "GAME":
           //When Player Pick Before Opponent is present (only 1 player in room)
           if (rooms[room].member.length !== 2) {
-            sendMessage(ws, { type: "INFO", text: "Sabar Nunggu Lawan" });
+            sendMessage(ws, { type: "CHAT", text: "Sabar Nunggu Lawan" });
             return;
           }
-          msg = {
-            type: "INFO",
-            text: `${username} choose ${parsedMessage.text}`,
-          };
           const parsedPick = gamePickSchema.safeParse(parsedMessage.text);
           if (parsedPick.success) {
             rooms[room].game[username] = parsedPick.data;
+            console.log(username, parsedPick.data);
           }
-          sendMessageToRoom(room, msg);
 
           //TIMER
           if (!rooms[room].timer) {
@@ -142,7 +148,7 @@ const server = Bun.serve<ClientData>({
                   text: `${Object.keys(rooms[room].game)[0]}`,
                   data: rooms[room].game,
                 });
-                resetGame(room);
+                resetTimer(room);
               } else {
                 sendMessageToRoom(room, {
                   type: "TIMER",
@@ -162,8 +168,20 @@ const server = Bun.serve<ClientData>({
               data: rooms[room].game,
             };
             sendMessageToRoom(room, resultMsg);
-            resetGame(room);
+            resetTimer(room);
           }
+          break;
+        case "RESET":
+          rooms[room].replay.push(username);
+          if (rooms[room].replay.length !== 2) {
+            const msg: Message = {
+              type: "INFO",
+              text: "Waiting for other player...",
+            };
+            sendMessage(ws, msg);
+            return;
+          }
+          resetGame(room);
           break;
         default:
           console.log("NOTHING MASE");
