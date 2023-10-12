@@ -11,6 +11,15 @@ interface Game {
   [key: string]: Pick;
 }
 
+interface Score {
+  [key: string]: number;
+}
+
+interface Result {
+  game: Game;
+  score: Score;
+}
+
 interface Room {
   [key: string | number]: {
     member: ServerWebSocket<ClientData>[];
@@ -18,25 +27,34 @@ interface Room {
     counter: number;
     timer?: Timer;
     replay: string[];
+    scores: Score;
   };
 }
 
 interface Message {
-  type: "INFO" | "CHAT" | "GAME" | "OPPONENT" | "TIMER" | "RESULT" | "RESET" | "REPLAY";
+  type:
+    | "INFO"
+    | "CHAT"
+    | "GAME"
+    | "OPPONENT"
+    | "TIMER"
+    | "RESULT"
+    | "RESET"
+    | "REPLAY";
   text: string | Buffer;
 }
 
 interface ResultMessage extends Message {
   type: "RESULT";
-  data: Game;
+  data: Result;
 }
 
 export {
-  ResultMessage,
   ClientData,
   Game,
   Message,
   Pick,
+  ResultMessage,
   Room,
   ServerWebSocket,
 };

@@ -94,6 +94,9 @@ const server = Bun.serve<ClientData>({
           counter: 15,
           timer,
           replay: [],
+          scores: {
+            [username]: 0,
+          },
         };
       } else {
         const msg: Message = {
@@ -106,6 +109,7 @@ const server = Bun.serve<ClientData>({
           text: rooms[room].member[0].data.username,
         });
         rooms[room].member.push(ws);
+        rooms[room].scores[username] = 0;
       }
     },
     message(ws, message) {
@@ -143,10 +147,17 @@ const server = Bun.serve<ClientData>({
                   type: "TIMER",
                   text: `TIME OUT`,
                 });
+
+                const winner = Object.keys(rooms[room].game)[0];
+                rooms[room].scores[winner] = rooms[room].scores[winner] + 1;
+
                 sendMessageToRoom(room, {
                   type: "RESULT",
-                  text: `${Object.keys(rooms[room].game)[0]}`,
-                  data: rooms[room].game,
+                  text: `${winner}`,
+                  data: {
+                    game: rooms[room].game,
+                    score: rooms[room].scores,
+                  },
                 });
                 resetTimer(room);
               } else {
@@ -162,10 +173,16 @@ const server = Bun.serve<ClientData>({
           //2 Player Already Pick
           if (Object.keys(rooms[room].game).length === 2) {
             const winner = calculateGame(rooms[room].game);
+            if (winner !== "DRAW" && winner !== undefined) {
+              rooms[room].scores[winner] = rooms[room].scores[winner] + 1;
+            }
             const resultMsg: ResultMessage = {
               type: "RESULT",
               text: `${winner}`,
-              data: rooms[room].game,
+              data: {
+                game: rooms[room].game,
+                score: rooms[room].scores,
+              },
             };
             sendMessageToRoom(room, resultMsg);
             resetTimer(room);
