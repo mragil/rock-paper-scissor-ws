@@ -1,4 +1,5 @@
 import { ServerWebSocket } from "bun";
+import Room from "./Room";
 
 interface ClientData {
   username: string;
@@ -20,15 +21,8 @@ interface Result {
   score: Score;
 }
 
-interface Room {
-  [key: string | number]: {
-    member: ServerWebSocket<ClientData>[];
-    game: Game;
-    counter: number;
-    timer?: Timer;
-    replay: string[];
-    scores: Score;
-  };
+interface Rooms {
+  [key: string | number]: Room;
 }
 
 interface Message {
@@ -55,6 +49,7 @@ export {
   Message,
   Pick,
   ResultMessage,
-  Room,
+  Rooms,
   ServerWebSocket,
+  Score
 };

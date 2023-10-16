@@ -1,15 +1,14 @@
-import { ClientData, Message, Room } from "./type";
+import { ClientData, Message } from "./type";
 
-import Game from "./Game";
+import Playground from "./Playground";
 import { LIMIT, PORT } from "./constant";
 import { gamePickSchema } from "./schema";
-const rooms: Room = {};
 
 const getDataFromQuery = (req: Request, key: string) => {
   return new URL(req.url).searchParams.get(key);
 };
 
-const rpsGame = new Game();
+const PlaygroundRPS = new Playground();
 
 const server = Bun.serve<ClientData>({
   fetch(req, server) {
@@ -31,17 +30,17 @@ const server = Bun.serve<ClientData>({
         return new Response("Room Name or User Name Cannot Be Empty");
       }
 
-      if (rooms[room]) {
-        if (rooms[room]?.member.length === LIMIT) {
+      if (PlaygroundRPS.isRoomExist(room)) {
+        const existingRoom = PlaygroundRPS.getRoom(room);
+        if (existingRoom.getMemberCount() === LIMIT) {
           return new Response(`Sudah LIMIT 2 ORANG DI ROOM ${room}`, {
             status: 400,
           });
         }
-        const existingUsername = rooms[room].member.find(
-          (client) => client.data.username === username
-        );
 
-        if (existingUsername) {
+        const isUsernameExist = existingRoom.isUserInRoom(username);
+
+        if (isUsernameExist) {
           return new Response(
             `Username: ${username} already exist in the room`,
             { status: 400 }
@@ -60,23 +59,29 @@ const server = Bun.serve<ClientData>({
   websocket: {
     open(ws) {
       const { room, username } = ws.data;
-      if (!rpsGame.isRoomExist(room)) {
-        rpsGame.initializeRoom(room, username, ws);
+      console.log("OPEN", { room, username });
+
+      if (!PlaygroundRPS.isRoomExist(room)) {
+        PlaygroundRPS.initializeRoom(room, username, ws);
       } else {
-        rpsGame.informOpponent(ws, room, username);
+        const existingRoom = PlaygroundRPS.getRoom(room);
+        existingRoom.informOpponent(ws, username);
       }
     },
     message(ws, message) {
       const { room, username } = ws.data;
+      console.log("MESSAGE", { room, username, message });
+
       const parsedMessage: Message = JSON.parse(message.toString());
-      let msg: Message;
+      const existingRoom = PlaygroundRPS.getRoom(room);
+
       switch (parsedMessage.type) {
         case "GAME":
           const parsedPick = gamePickSchema.parse(parsedMessage.text);
-          rpsGame.handleGame(room, username, parsedPick);
+          existingRoom.handleGame(username, parsedPick);
           break;
         case "RESET":
-          rpsGame.handleReset(room, username, ws);
+          existingRoom.handleReset(username, ws);
           break;
         default:
           console.log("NOTHING MASE");
@@ -84,7 +89,14 @@ const server = Bun.serve<ClientData>({
     },
     close(ws) {
       const { room, username } = ws.data;
-      rpsGame.handleClose(room, username, ws);
+      console.log("CLOSE", { room, username });
+
+      const existingRoom = PlaygroundRPS.getRoom(room);
+      existingRoom.handleLeave(username, ws);
+
+      if (existingRoom.getMemberCount() === 0) {
+        PlaygroundRPS.deleteRoom(room);
+      }
     },
   },
 });
