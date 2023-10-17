@@ -1,6 +1,7 @@
 import { ClientData, Rooms, ServerWebSocket } from "./type";
 
 import Room from "./Room";
+import { LIMIT } from "./constant";
 
 class Playground {
   private rooms: Rooms;
@@ -30,6 +31,18 @@ class Playground {
 
   public deleteRoom(room: string) {
     delete this.rooms[room];
+  }
+
+  public getRooms() {
+    const roomNames = Object.keys(this.rooms);
+    const data = roomNames.map((name) => {
+      return {
+        name,
+        isFull: this.getRoom(name).getMemberCount() === LIMIT,
+        member: this.getRoom(name).getMemberName(),
+      };
+    });
+    return data;
   }
 }
 

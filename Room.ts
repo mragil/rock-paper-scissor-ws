@@ -30,6 +30,10 @@ class Room {
     return this.member.length;
   }
 
+  public getMemberName() {
+    return this.member.map((ws) => ws.data.username);
+  }
+
   public isUserInRoom(username: string) {
     const existingUsername = this.member.find(
       (client) => client.data.username === username

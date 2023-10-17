@@ -53,6 +53,10 @@ const server = Bun.serve<ClientData>({
         : new Response("WebSocket upgrade error", { status: 400 });
     }
 
+    if (url.pathname === "/list") {
+      return Response.json(PlaygroundRPS.getRooms());
+    }
+
     return new Response("Hello world");
   },
   port: PORT,
