@@ -34,7 +34,8 @@ interface Message {
     | "TIMER"
     | "RESULT"
     | "RESET"
-    | "REPLAY";
+    | "REPLAY"
+    | "OPPONENT-LEFT";
   text: string | Buffer;
 }
 

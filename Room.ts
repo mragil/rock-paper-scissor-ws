@@ -150,13 +150,18 @@ class Room {
 
   public handleLeave(username: string, ws: ServerWebSocket<ClientData>) {
     this.member = this.member.filter((client) => client != ws);
+    this.counter = 15;
+    this.replay = [];
+    delete this.game[username];
+    delete this.scores[username];
+    this.scores[Object.keys(this.scores)[0]] = 0;
 
     if (this.member.length === 0) {
       return;
     }
 
     const msg: Message = {
-      type: "INFO",
+      type: "OPPONENT-LEFT",
       text: `${username} has left the chat`,
     };
     this.broadcastMessage(msg);
