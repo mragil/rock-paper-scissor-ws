@@ -1,4 +1,4 @@
-import { ClientData, Rooms, ServerWebSocket } from "./type";
+import { ClientData, Rooms, ServerWebSocket } from "./type.NG";
 
 import Room from "./Room";
 import { LIMIT } from "./constant";

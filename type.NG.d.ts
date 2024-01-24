@@ -1,5 +1,5 @@
 import { ServerWebSocket } from "bun";
-import Room from "./Room-NG";
+import Room from "./Room";
 
 interface ClientData {
   username: string;
@@ -46,6 +46,6 @@ export {
   Pick,
   ResultMessage,
   Rooms,
+  Score,
   ServerWebSocket,
-  Score
 };

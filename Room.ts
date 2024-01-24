@@ -1,29 +1,33 @@
 import {
   ClientData,
-  Game,
   Message,
-  Pick,
   ResultMessage,
   Score,
   ServerWebSocket,
-} from "./type";
+} from "./type.NG";
 
-import calculateGame from "./rockPaperScissor";
+import { TARGET_LIMIT } from "./constant";
 
 class Room {
   private member: ServerWebSocket<ClientData>[];
-  private game: Game;
+  private targetNumber: number;
   private counter: number;
-  private timer?: Timer;
+  private timerPlayer?: Timer;
   private replay: string[];
   private scores: Score;
+  private currentPlayer: ServerWebSocket<ClientData>;
+  private minLimit: number;
+  private maxLimit: number;
 
   constructor(room: string, username: string, ws: ServerWebSocket<ClientData>) {
     this.member = [ws];
-    this.game = {};
+    this.targetNumber = Math.floor(Math.random() * TARGET_LIMIT) + 1;
     this.counter = 15;
     this.replay = [];
     this.scores = { [username]: 0 };
+    this.currentPlayer = ws;
+    this.minLimit = 1;
+    this.maxLimit = TARGET_LIMIT;
   }
 
   public getMemberCount() {
@@ -31,6 +35,7 @@ class Room {
   }
 
   public getMemberName() {
+    console.log(this.member);
     return this.member.map((ws) => ws.data.username);
   }
 
@@ -41,7 +46,7 @@ class Room {
     return !!existingUsername;
   }
 
-  public broadcastMessage(message: Message | ResultMessage) {
+  private broadcastMessage(message: Message | ResultMessage) {
     this.member.forEach((client) => {
       client.send(JSON.stringify(message));
     });
@@ -52,19 +57,76 @@ class Room {
   }
 
   private resetTimer() {
-    clearInterval(this.timer);
+    clearInterval(this.timerPlayer);
     this.counter = 15;
-    this.timer = undefined;
+    this.timerPlayer = undefined;
   }
 
   private resetGame() {
-    this.game = {};
     this.replay = [];
+    this.resetTimer();
     this.broadcastMessage({ type: "REPLAY", text: `Lets Play Again` });
   }
 
-  public informOpponent(ws: ServerWebSocket<ClientData>, username: string) {
+  private informPlayerTurn() {
     const msg: Message = {
+      type: "PLAYER_TURN",
+      text: `${this.currentPlayer.data.username}}`,
+    };
+    this.broadcastMessage(msg);
+
+    //TIMER
+    if (!this.timerPlayer) {
+      this.timerPlayer = setInterval(() => {
+        if (this.counter === 0) {
+          this.broadcastMessage({
+            type: "TIMER",
+            text: `TIME OUT`,
+          });
+
+          const winner = this.member.find(
+            (player) => player !== this.currentPlayer
+          )!.data.username;
+          this.scores[winner] = this.scores[winner] + 1;
+
+          this.broadcastMessage({
+            type: "RESULT",
+            text: `${winner}`,
+            data: {
+              score: this.scores,
+            },
+          });
+          this.resetTimer();
+        } else {
+          this.sendMessage(this.currentPlayer, {
+            type: "TIMER",
+            text: `${this.counter} second left`,
+          });
+        }
+        this.counter = this.counter - 1;
+      }, 1000);
+    }
+  }
+
+  private calculateTargetNumberRange = (
+    numberGuessed: number,
+    targetNumber: number
+  ) => {
+    let result;
+
+    if (numberGuessed < targetNumber) {
+      result = `${numberGuessed} - ${this.maxLimit}`;
+      this.minLimit = numberGuessed;
+    }
+    if (numberGuessed > targetNumber) {
+      result = `${this.minLimit} - ${numberGuessed}`;
+      this.maxLimit = numberGuessed;
+    }
+    return result;
+  };
+
+  public informGameStart(ws: ServerWebSocket<ClientData>, username: string) {
+    let msg: Message = {
       type: "OPPONENT",
       text: username,
     };
@@ -75,64 +137,58 @@ class Room {
     });
     this.member.push(ws);
     this.scores[username] = 0;
+    //Inform target number to all player
+    msg = {
+      type: "GAME",
+      text: `${this.targetNumber}`,
+    };
+    this.broadcastMessage(msg);
+    //Inform Player 1 turn
+    this.currentPlayer = this.member[0];
+    this.informPlayerTurn();
   }
 
-  public handleGame(username: string, pick: Pick) {
-    //When Player Pick Before Opponent is present (only 1 player in room)
-    if (this.member.length !== 2) {
+  public playerTurn(ws: ServerWebSocket<ClientData>, numberGuessed: number) {
+    const { username } = ws.data;
+    if (numberGuessed === this.minLimit || numberGuessed === this.maxLimit) {
+      this.sendMessage(ws, {
+        type: "INFO",
+        text: `The number you guessed must be bigger thank ${this.minLimit} and less than ${this.maxLimit}`,
+      });
       return;
     }
 
-    this.game[username] = pick;
+    this.resetTimer();
 
-    //TIMER
-    if (!this.timer) {
-      this.timer = setInterval(() => {
-        if (this.counter === 0) {
-          this.broadcastMessage({
-            type: "TIMER",
-            text: `TIME OUT`,
-          });
-
-          const winner = Object.keys(this.game)[0];
-          this.scores[winner] = this.scores[winner] + 1;
-
-          this.broadcastMessage({
-            type: "RESULT",
-            text: `${winner}`,
-            data: {
-              game: this.game,
-              score: this.scores,
-            },
-          });
-          this.resetTimer();
-        } else {
-          this.broadcastMessage({
-            type: "TIMER",
-            text: `${this.counter} second left`,
-          });
-        }
-        this.counter = this.counter - 1;
-      }, 1000);
+    if (username !== this.currentPlayer.data.username) {
+      return;
     }
 
-    //2 Player Already Pick
-    if (Object.keys(this.game).length === 2) {
-      const winner = calculateGame(this.game);
-      if (winner !== "DRAW" && winner !== undefined) {
-        this.scores[winner] = this.scores[winner] + 1;
-      }
-      const resultMsg: ResultMessage = {
+    if (numberGuessed === this.targetNumber) {
+      this.scores[username] = this.scores[username] + 1;
+      this.broadcastMessage({
         type: "RESULT",
-        text: `${winner}`,
+        text: `Winner is ${username}`,
         data: {
-          game: this.game,
           score: this.scores,
         },
-      };
-      this.broadcastMessage(resultMsg);
+      });
       this.resetTimer();
+      return;
     }
+
+    this.broadcastMessage({
+      type: "INFO",
+      text: `The target number is ${this.calculateTargetNumberRange(
+        numberGuessed,
+        this.targetNumber
+      )}`,
+    });
+
+    this.currentPlayer = this.member.find(
+      (player) => player.data.username !== username
+    )!;
+    this.informPlayerTurn();
   }
 
   public handleReset(username: string, ws: ServerWebSocket<ClientData>) {
@@ -152,7 +208,6 @@ class Room {
     this.member = this.member.filter((client) => client != ws);
     this.counter = 15;
     this.replay = [];
-    delete this.game[username];
     delete this.scores[username];
     this.scores[Object.keys(this.scores)[0]] = 0;
 
@@ -165,6 +220,8 @@ class Room {
       text: `${username} has left the chat`,
     };
     this.broadcastMessage(msg);
+
+    this.resetGame();
   }
 }
 

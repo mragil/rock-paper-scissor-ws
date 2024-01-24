@@ -1,14 +1,15 @@
-import { ClientData, Message } from "./type";
+import { ClientData, Message } from "./type.NG";
+
+import { z } from "zod";
 
 import Playground from "./Playground";
 import { LIMIT, PORT } from "./constant";
-import { gamePickSchema } from "./schema";
 
 const getDataFromQuery = (req: Request, key: string) => {
   return new URL(req.url).searchParams.get(key);
 };
 
-const PlaygroundRPS = new Playground();
+const PlaygroundNG = new Playground();
 
 const server = Bun.serve<ClientData>({
   fetch(req, server) {
@@ -17,7 +18,7 @@ const server = Bun.serve<ClientData>({
       return Response.json({
         hai: "Hello",
       });
-    if (url.pathname === "/chat") {
+    if (url.pathname === "/number-guesser") {
       const username = getDataFromQuery(req, "userName");
       const room = getDataFromQuery(req, "roomName");
 
@@ -30,8 +31,8 @@ const server = Bun.serve<ClientData>({
         return new Response("Room Name or User Name Cannot Be Empty");
       }
 
-      if (PlaygroundRPS.isRoomExist(room)) {
-        const existingRoom = PlaygroundRPS.getRoom(room);
+      if (PlaygroundNG.isRoomExist(room)) {
+        const existingRoom = PlaygroundNG.getRoom(room);
         if (existingRoom.getMemberCount() === LIMIT) {
           return new Response(`Sudah LIMIT 2 ORANG DI ROOM ${room}`, {
             status: 400,
@@ -54,7 +55,7 @@ const server = Bun.serve<ClientData>({
     }
 
     if (url.pathname === "/list") {
-      return Response.json(PlaygroundRPS.getRooms());
+      return Response.json(PlaygroundNG.getRooms());
     }
 
     return new Response("Hello world");
@@ -65,11 +66,11 @@ const server = Bun.serve<ClientData>({
       const { room, username } = ws.data;
       console.log("OPEN", { room, username });
 
-      if (!PlaygroundRPS.isRoomExist(room)) {
-        PlaygroundRPS.initializeRoom(room, username, ws);
+      if (!PlaygroundNG.isRoomExist(room)) {
+        PlaygroundNG.initializeRoom(room, username, ws);
       } else {
-        const existingRoom = PlaygroundRPS.getRoom(room);
-        existingRoom.informOpponent(ws, username);
+        const existingRoom = PlaygroundNG.getRoom(room);
+        existingRoom.informGameStart(ws, username);
       }
     },
     message(ws, message) {
@@ -77,29 +78,32 @@ const server = Bun.serve<ClientData>({
       console.log("MESSAGE", { room, username, message });
 
       const parsedMessage: Message = JSON.parse(message.toString());
-      const existingRoom = PlaygroundRPS.getRoom(room);
+      const existingRoom = PlaygroundNG.getRoom(room);
 
       switch (parsedMessage.type) {
-        case "GAME":
-          const parsedPick = gamePickSchema.parse(parsedMessage.text);
-          existingRoom.handleGame(username, parsedPick);
+        case "PLAYER_TURN": {
+          const numberGuessed = z.coerce.number().parse(parsedMessage.text);
+          existingRoom.playerTurn(ws, numberGuessed);
           break;
-        case "RESET":
+        }
+        case "RESET": {
           existingRoom.handleReset(username, ws);
           break;
-        default:
+        }
+        default: {
           console.log("NOTHING MASE");
+        }
       }
     },
     close(ws) {
       const { room, username } = ws.data;
       console.log("CLOSE", { room, username });
 
-      const existingRoom = PlaygroundRPS.getRoom(room);
+      const existingRoom = PlaygroundNG.getRoom(room);
       existingRoom.handleLeave(username, ws);
 
       if (existingRoom.getMemberCount() === 0) {
-        PlaygroundRPS.deleteRoom(room);
+        PlaygroundNG.deleteRoom(room);
       }
     },
   },
