@@ -1,6 +1,4 @@
-import { ClientData, Message } from "./type.NG";
-
-import { z } from "zod";
+import { ClientData, Message } from "./type";
 
 import Playground from "./Playground";
 import { LIMIT, PORT } from "./constant";
@@ -67,10 +65,10 @@ const server = Bun.serve<ClientData>({
       console.log("OPEN", { room, username });
 
       if (!PlaygroundNG.isRoomExist(room)) {
-        PlaygroundNG.initializeRoom(room, username, ws);
+        PlaygroundNG.initializeRoom(room, ws);
       } else {
         const existingRoom = PlaygroundNG.getRoom(room);
-        existingRoom.informGameStart(ws, username);
+        existingRoom.addMember(ws);
       }
     },
     message(ws, message) {
@@ -82,12 +80,15 @@ const server = Bun.serve<ClientData>({
 
       switch (parsedMessage.type) {
         case "PLAYER_TURN": {
-          const numberGuessed = z.coerce.number().parse(parsedMessage.text);
-          existingRoom.playerTurn(ws, numberGuessed);
+          existingRoom.handleGamePlay(ws, parsedMessage);
           break;
         }
         case "RESET": {
-          existingRoom.handleReset(username, ws);
+          existingRoom.handleLeave(ws);
+          break;
+        }
+        case "REPLAY": {
+          existingRoom.handleReplay(ws);
           break;
         }
         default: {
@@ -100,7 +101,7 @@ const server = Bun.serve<ClientData>({
       console.log("CLOSE", { room, username });
 
       const existingRoom = PlaygroundNG.getRoom(room);
-      existingRoom.handleLeave(username, ws);
+      existingRoom.handleLeave(ws);
 
       if (existingRoom.getMemberCount() === 0) {
         PlaygroundNG.deleteRoom(room);

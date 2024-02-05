@@ -1,4 +1,4 @@
-import { ClientData, Rooms, ServerWebSocket } from "./type.NG";
+import { ClientData, Rooms, ServerWebSocket } from "./type";
 
 import Room from "./Room";
 import { LIMIT } from "./constant";
@@ -12,10 +12,9 @@ class Playground {
 
   public initializeRoom(
     room: string,
-    username: string,
     ws: ServerWebSocket<ClientData>
   ) {
-    this.rooms[room] = new Room(room, username, ws);
+    this.rooms[room] = new Room(ws);
   }
 
   public isRoomExist(room: string) {
