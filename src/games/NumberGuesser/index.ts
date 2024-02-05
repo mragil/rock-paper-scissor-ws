@@ -1,9 +1,9 @@
 import { z } from "zod";
 
-import { ClientData, Message, Score, ServerWebSocket } from "./type";
+import { ClientData, Message, Score, ServerWebSocket } from "../../type";
 
-import Room from "./Room";
-import { TARGET_LIMIT } from "./constant";
+import Room from "../../Room";
+import { TARGET_LIMIT } from "../../constant";
 
 class NumberGuesser {
   private room: Room;

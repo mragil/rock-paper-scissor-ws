@@ -1,4 +1,4 @@
-import { Game } from "./type";
+import { Game } from "../../type";
 
 const calculateGame = (input: Game) => {
   const [p1, p2] = Object.keys(input);

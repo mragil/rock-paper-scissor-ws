@@ -1,9 +1,9 @@
 import { ServerWebSocket } from "bun";
 
-import Room from "./Room";
+import Room from "../../Room";
+import { gamePickSchema } from "../../schema";
+import { ClientData, Game, Message, ResultMessage, Score } from "../../type";
 import calculateGame from "./calculateGame";
-import { gamePickSchema } from "./schema";
-import { ClientData, Game, Message, ResultMessage, Score } from "./type";
 
 class RockPaperScissor {
   private room: Room;

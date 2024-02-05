@@ -1,5 +1,5 @@
-import NumberGuesser from "./NumberGuesser";
-import RockPaperScissor from "./RockPaperScissor";
+import NumberGuesser from "./games/NumberGuesser";
+import RockPaperScissor from "./games/RockPaperScissor";
 import {
   ClientData,
   Genre,
