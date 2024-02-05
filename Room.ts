@@ -3,7 +3,7 @@ import { ClientData, Message, ResultMessage, ServerWebSocket } from "./type";
 
 class Room {
   private member: ServerWebSocket<ClientData>[];
-  private game: Game | undefined;
+  private game?: Game;
 
   constructor(ws: ServerWebSocket<ClientData>) {
     this.member = [ws];
