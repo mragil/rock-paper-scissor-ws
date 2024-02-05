@@ -1,13 +1,22 @@
-import Game from "./Game";
-import { ClientData, Message, ResultMessage, ServerWebSocket } from "./type";
+import NumberGuesser from "./NumberGuesser";
+import RockPaperScissor from "./RockPaperScissor";
+import {
+  ClientData,
+  Genre,
+  Message,
+  ResultMessage,
+  ServerWebSocket,
+} from "./type";
 
 class Room {
   private member: ServerWebSocket<ClientData>[];
-  private game?: Game;
+  private game?: NumberGuesser | RockPaperScissor;
+  private genre: Genre;
 
-  constructor(ws: ServerWebSocket<ClientData>) {
+  constructor(ws: ServerWebSocket<ClientData>, genre: Genre) {
     this.member = [ws];
     this.game = undefined;
+    this.genre = genre;
   }
 
   public getMemberCount() {
@@ -33,7 +42,10 @@ class Room {
   public addMember(ws: ServerWebSocket<ClientData>) {
     this.member.push(ws);
     if (this.member.length === 2) {
-      this.game = new Game(this);
+      this.game =
+        this.genre === "NUMBER_GUESSER"
+          ? new NumberGuesser(this)
+          : new RockPaperScissor(this);
     }
   }
 

@@ -1,7 +1,7 @@
 import { ClientData, Message } from "./type";
 
 import Playground from "./Playground";
-import { LIMIT, PORT } from "./constant";
+import { GAME_GENRE, LIMIT, PORT } from "./constant";
 
 const getDataFromQuery = (req: Request, key: string) => {
   return new URL(req.url).searchParams.get(key);
@@ -16,7 +16,11 @@ const server = Bun.serve<ClientData>({
       return Response.json({
         hai: "Hello",
       });
-    if (url.pathname === "/number-guesser") {
+    if (
+      url.pathname === "/number-guesser" ||
+      url.pathname === "/rock-paper-scissor"
+    ) {
+      const genre = GAME_GENRE[url.pathname];
       const username = getDataFromQuery(req, "userName");
       const room = getDataFromQuery(req, "roomName");
 
@@ -46,7 +50,7 @@ const server = Bun.serve<ClientData>({
           );
         }
       }
-      const success = server.upgrade(req, { data: { username, room } });
+      const success = server.upgrade(req, { data: { username, room, genre } });
       return success
         ? undefined
         : new Response("WebSocket upgrade error", { status: 400 });
@@ -61,11 +65,11 @@ const server = Bun.serve<ClientData>({
   port: PORT,
   websocket: {
     open(ws) {
-      const { room, username } = ws.data;
+      const { room, username, genre } = ws.data;
       console.log("OPEN", { room, username });
 
       if (!PlaygroundNG.isRoomExist(room)) {
-        PlaygroundNG.initializeRoom(room, ws);
+        PlaygroundNG.initializeRoom(room, ws, genre);
       } else {
         const existingRoom = PlaygroundNG.getRoom(room);
         existingRoom.addMember(ws);

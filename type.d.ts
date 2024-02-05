@@ -4,6 +4,13 @@ import Room from "./Room";
 interface ClientData {
   username: string;
   room: string;
+  genre: Genre;
+}
+
+type Pick = "Rock" | "Paper" | "Scissor";
+
+interface Game {
+  [key: string]: Pick;
 }
 
 interface Score {
@@ -12,6 +19,7 @@ interface Score {
 
 interface Result {
   score: Score;
+  game?: Game;
 }
 
 interface Rooms {
@@ -39,9 +47,12 @@ interface ResultMessage extends Message {
   data: Result;
 }
 
+type Genre = "ROCK_PAPER_SCISSOR" | "NUMBER_GUESSER";
+
 export {
   ClientData,
   Game,
+  Genre,
   Message,
   Pick,
   ResultMessage,
