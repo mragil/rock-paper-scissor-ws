@@ -43,11 +43,13 @@ class RockPaperScissor {
   }
 
   private informGameStart() {
-    let msg: Message = {
-      type: "OPPONENT",
-      text: `${this.room.getMember().map((member) => member.data.username)}`,
-    };
-    this.room.broadcastMessage(msg);
+    const members = this.room.getMember();
+    members.forEach((member, idx) => {
+      this.room.sendMessage(member, {
+        type: "OPPONENT",
+        text: `${members[(idx + 1) % members.length].data.username}`,
+      });
+    });
   }
 
   public playerTurn(ws: ServerWebSocket<ClientData>, message: Message) {
@@ -127,8 +129,6 @@ class RockPaperScissor {
       return;
     }
     this.resetGame();
-
-    this.informGameStart();
   }
   public handlePlayerLeave(username: string) {
     this.counter = 15;
