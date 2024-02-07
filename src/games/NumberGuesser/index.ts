@@ -119,12 +119,12 @@ class NumberGuesser {
     };
     this.room.broadcastMessage(msg);
 
-    //Inform target number to all player
-    msg = {
-      type: "GAME",
-      text: `${this.targetNumber}`,
-    };
-    this.room.broadcastMessage(msg);
+    // Inform target number to all player
+    // msg = {
+    //   type: "GAME",
+    //   text: `${this.targetNumber}`,
+    // };
+    // this.room.broadcastMessage(msg);
 
     //Inform Player 1 turn
     this.informPlayerTurn();
