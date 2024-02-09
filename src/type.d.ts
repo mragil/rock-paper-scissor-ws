@@ -38,6 +38,7 @@ interface Rooms {
 interface Message {
   type:
     | "INFO"
+    | "MODAL-INFO"
     | "CHAT"
     | "GAME"
     | "PLAYER_TURN"

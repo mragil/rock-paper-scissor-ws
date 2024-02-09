@@ -62,14 +62,14 @@ class NumberGuesser {
     numberGuessed: number,
     targetNumber: number
   ) => {
-    let result;
+    let result = "";
 
     if (numberGuessed < targetNumber) {
-      result = `${numberGuessed} - ${this.maxLimit}`;
+      result = `${numberGuessed}-${this.maxLimit}`;
       this.minLimit = numberGuessed;
     }
     if (numberGuessed > targetNumber) {
-      result = `${this.minLimit} - ${numberGuessed}`;
+      result = `${this.minLimit}-${numberGuessed}`;
       this.maxLimit = numberGuessed;
     }
     return result;
@@ -84,6 +84,7 @@ class NumberGuesser {
   private resetGame() {
     this.replay = [];
     this.resetTimer();
+    Object.keys(this.game.player).forEach(username => this.game.player[username] = [])
     this.room.broadcastMessage({ type: "REPLAY", text: `Lets Play Again` });
   }
 
@@ -111,7 +112,8 @@ class NumberGuesser {
             text: `${winner}`,
             data: {
               score: this.scores,
-            },
+              game: this.game
+            }
           });
           this.resetTimer();
         } else {
@@ -142,7 +144,7 @@ class NumberGuesser {
     // Inform target number range to all player
     this.room.broadcastMessage({
       type: "GAME",
-      text: `The Target number is ${this.minLimit} - ${this.maxLimit} `,
+      text: `${this.minLimit}-${this.maxLimit}`,
     });
 
     //Inform Player 1 turn
@@ -152,10 +154,16 @@ class NumberGuesser {
   public playerTurn(ws: ServerWebSocket<ClientData>, message: Message) {
     const numberGuessed = z.coerce.number().parse(message.text);
     const { username } = ws.data;
-    if (numberGuessed === this.minLimit || numberGuessed === this.maxLimit) {
+
+    if (
+      numberGuessed < this.minLimit ||
+      numberGuessed > this.maxLimit ||
+      numberGuessed === this.minLimit ||
+      numberGuessed === this.maxLimit
+    ) {
       this.room.sendMessage(ws, {
         type: "INFO",
-        text: `The number you guessed must be bigger thank ${this.minLimit} and less than ${this.maxLimit}`,
+        text: `The number you guessed must be bigger than ${this.minLimit} and less than ${this.maxLimit}`,
       });
       return;
     }
@@ -183,11 +191,8 @@ class NumberGuesser {
     }
 
     this.room.broadcastMessage({
-      type: "INFO",
-      text: `The target number is ${this.calculateTargetNumberRange(
-        numberGuessed,
-        this.targetNumber
-      )}`,
+      type: "GAME",
+      text: this.calculateTargetNumberRange(numberGuessed, this.targetNumber),
     });
 
     this.currentPlayer = this.findNextPlayer();
@@ -206,7 +211,7 @@ class NumberGuesser {
     this.replay.push(ws.data.username);
     if (this.replay.length !== 2) {
       const msg: Message = {
-        type: "INFO",
+        type: "MODAL-INFO",
         text: "Waiting for other player...",
       };
       this.room.sendMessage(ws, msg);
