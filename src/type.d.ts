@@ -9,8 +9,17 @@ interface ClientData {
 
 type Pick = "Rock" | "Paper" | "Scissor";
 
-interface Game {
+interface GameRPS {
   [key: string]: Pick;
+}
+
+interface NGList {
+  [key: string]: number[];
+}
+
+interface GameNG {
+  player: NGList;
+  targetNumber: number;
 }
 
 interface Score {
@@ -19,7 +28,7 @@ interface Score {
 
 interface Result {
   score: Score;
-  game?: Game;
+  game?: GameRPS | GameNG;
 }
 
 interface Rooms {
@@ -51,7 +60,8 @@ type Genre = "ROCK_PAPER_SCISSOR" | "NUMBER_GUESSER";
 
 export {
   ClientData,
-  Game,
+  GameRPS,
+  GameNG,
   Genre,
   Message,
   Pick,

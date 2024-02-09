@@ -1,12 +1,19 @@
 import { z } from "zod";
 
-import { ClientData, Message, Score, ServerWebSocket } from "../../type";
+import {
+  ClientData,
+  GameNG,
+  Message,
+  Score,
+  ServerWebSocket,
+} from "../../type";
 
 import Room from "../../Room";
 import { TARGET_LIMIT } from "../../constant";
 
 class NumberGuesser {
   private room: Room;
+  private game: GameNG;
   private currentPlayer: ServerWebSocket<ClientData>;
   private targetNumber: number;
   private minLimit: number;
@@ -20,6 +27,16 @@ class NumberGuesser {
     this.room = room;
     this.targetNumber = 0;
     this.counter = 15;
+    this.game = {
+      targetNumber: 0,
+      player: this.room.getMember().reduce(
+        (acc, member) => ({
+          ...acc,
+          [member.data.username]: [],
+        }),
+        {}
+      ),
+    };
     this.replay = [];
     this.scores = this.room.getMember().reduce(
       (acc, member) => ({
@@ -110,21 +127,23 @@ class NumberGuesser {
 
   private informGameStart() {
     this.targetNumber = Math.floor(Math.random() * TARGET_LIMIT) + 1;
+    this.game.targetNumber = this.targetNumber;
     this.minLimit = 1;
     this.maxLimit = TARGET_LIMIT;
 
-    let msg: Message = {
-      type: "OPPONENT",
-      text: `${this.room.getMember().map((member) => member.data.username)}`,
-    };
-    this.room.broadcastMessage(msg);
+    const members = this.room.getMember();
+    members.forEach((member, idx) => {
+      this.room.sendMessage(member, {
+        type: "OPPONENT",
+        text: `${members[(idx + 1) % members.length].data.username}`,
+      });
+    });
 
-    // Inform target number to all player
-    // msg = {
-    //   type: "GAME",
-    //   text: `${this.targetNumber}`,
-    // };
-    // this.room.broadcastMessage(msg);
+    // Inform target number range to all player
+    this.room.broadcastMessage({
+      type: "GAME",
+      text: `The Target number is ${this.minLimit} - ${this.maxLimit} `,
+    });
 
     //Inform Player 1 turn
     this.informPlayerTurn();
@@ -147,12 +166,15 @@ class NumberGuesser {
       return;
     }
 
+    this.game.player[username].push(numberGuessed);
+
     if (numberGuessed === this.targetNumber) {
       this.scores[username] = this.scores[username] + 1;
       this.room.broadcastMessage({
         type: "RESULT",
-        text: `Winner is ${username}`,
+        text: username,
         data: {
+          game: this.game,
           score: this.scores,
         },
       });
@@ -200,7 +222,9 @@ class NumberGuesser {
     this.counter = 15;
     this.replay = [];
     delete this.scores[username];
+    delete this.game.player[username];
     this.scores[Object.keys(this.scores)[0]] = 0;
+    this.game.player[Object.keys(this.game.player)[0]] = [];
     this.resetTimer();
   }
 }

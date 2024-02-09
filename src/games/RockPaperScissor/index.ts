@@ -2,12 +2,12 @@ import { ServerWebSocket } from "bun";
 
 import Room from "../../Room";
 import { gamePickSchema } from "../../schema";
-import { ClientData, Game, Message, ResultMessage, Score } from "../../type";
+import { ClientData, GameRPS, Message, ResultMessage, Score } from "../../type";
 import calculateGame from "./calculateGame";
 
 class RockPaperScissor {
   private room: Room;
-  private game: Game;
+  private game: GameRPS;
   private replay: string[];
   private scores: Score;
   private counter: number;
