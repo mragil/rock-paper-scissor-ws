@@ -12,6 +12,7 @@ import Room from "../../Room";
 import { TARGET_LIMIT } from "../../constant";
 
 class NumberGuesser {
+  private name: string;
   private room: Room;
   private game: GameNG;
   private currentPlayer: ServerWebSocket<ClientData>;
@@ -24,9 +25,10 @@ class NumberGuesser {
   private replay: string[];
 
   constructor(room: Room) {
+    this.name = "NUMBER_GUESSER";
     this.room = room;
     this.targetNumber = 0;
-    this.counter = 15;
+    this.counter = 1500;
     this.game = {
       targetNumber: 0,
       player: this.room.getMember().reduce(
@@ -50,6 +52,10 @@ class NumberGuesser {
     this.maxLimit = 0;
 
     this.informGameStart();
+  }
+
+  public getGameName() {
+    return "NUMBER_GUESSER";
   }
 
   private findNextPlayer() {
@@ -77,14 +83,16 @@ class NumberGuesser {
 
   private resetTimer() {
     clearInterval(this.timerPlayer);
-    this.counter = 15;
+    this.counter = 1500;
     this.timerPlayer = undefined;
   }
 
   private resetGame() {
     this.replay = [];
     this.resetTimer();
-    Object.keys(this.game.player).forEach(username => this.game.player[username] = [])
+    Object.keys(this.game.player).forEach(
+      (username) => (this.game.player[username] = [])
+    );
     this.room.broadcastMessage({ type: "REPLAY", text: `Lets Play Again` });
   }
 
@@ -112,8 +120,8 @@ class NumberGuesser {
             text: `${winner}`,
             data: {
               score: this.scores,
-              game: this.game
-            }
+              game: this.game,
+            },
           });
           this.resetTimer();
         } else {
@@ -224,7 +232,7 @@ class NumberGuesser {
   }
 
   public handlePlayerLeave(username: string) {
-    this.counter = 15;
+    this.counter = 1500;
     this.replay = [];
     delete this.scores[username];
     delete this.game.player[username];

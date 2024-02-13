@@ -1,8 +1,7 @@
-import { Game } from "../../type";
+import { GameRPS as Game } from "../../type";
 
 const calculateGame = (input: Game) => {
   const [p1, p2] = Object.keys(input);
-  console.log({ p1, p2 });
   if (input[p1] === input[p2]) {
     return "DRAW";
   }

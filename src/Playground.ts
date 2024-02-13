@@ -40,6 +40,7 @@ class Playground {
         name,
         isFull: this.getRoom(name).getMemberCount() === LIMIT,
         member: this.getRoom(name).getMemberName(),
+        game: this.getRoom(name).getGameName(),
       };
     });
     return data;

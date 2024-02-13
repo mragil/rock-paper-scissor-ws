@@ -24,12 +24,15 @@ class Room {
   }
 
   public getMemberName() {
-    console.log(this.member);
     return this.member.map((ws) => ws.data.username);
   }
 
   public getMember() {
     return this.member;
+  }
+
+  public getGameName() {
+    return this.game?.getGameName();
   }
 
   public isUserInRoom(username: string) {

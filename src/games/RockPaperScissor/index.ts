@@ -29,6 +29,10 @@ class RockPaperScissor {
     this.informGameStart();
   }
 
+  public getGameName() {
+    return "ROCK_PAPER_SCISSOR";
+  }
+
   private resetTimer() {
     clearInterval(this.timer);
     this.counter = 15;
