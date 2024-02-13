@@ -28,7 +28,7 @@ class NumberGuesser {
     this.name = "NUMBER_GUESSER";
     this.room = room;
     this.targetNumber = 0;
-    this.counter = 1500;
+    this.counter = 15;
     this.game = {
       targetNumber: 0,
       player: this.room.getMember().reduce(
@@ -83,7 +83,7 @@ class NumberGuesser {
 
   private resetTimer() {
     clearInterval(this.timerPlayer);
-    this.counter = 1500;
+    this.counter = 15;
     this.timerPlayer = undefined;
   }
 
@@ -232,7 +232,7 @@ class NumberGuesser {
   }
 
   public handlePlayerLeave(username: string) {
-    this.counter = 1500;
+    this.counter = 15;
     this.replay = [];
     delete this.scores[username];
     delete this.game.player[username];
